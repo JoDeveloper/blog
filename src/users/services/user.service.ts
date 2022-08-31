@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
 
@@ -14,7 +14,7 @@ export class UserService {
     @InjectRepository(UserEntity)
     private readonly _userRepository: Repository<UserEntity>,
     private _authService: AuthService,
-  ) {}
+  ) { }
 
   findOne(id: number): Observable<User> | any {
     const user = from(this._userRepository.findOneBy({ id: id })).pipe(
@@ -22,7 +22,7 @@ export class UserService {
     );
   }
 
-  create(user: User): Observable<User> |any{
+  create(user: User): Observable<User> | any {
     return this._authService.hashPassword(user.password).pipe(
       switchMap((passwordHash: string) => {
         const newUser = this._swaprawPasswordWithHashedOne(passwordHash, user);
@@ -61,13 +61,14 @@ export class UserService {
   login(user: User): Observable<string> {
     return this.validate(user.email, user.password).pipe(
       switchMap((user: User) => {
-        if (user) {
+        console.log(user)
+        if (user.id) {
           return this._authService
             .generateJWt(user)
             .pipe(map((jwt: string) => jwt),
-          );
-        }else
-        return 'Wrong username or password provided';
+            );
+        } else
+          return 'Wrong username or password provided';
       },
       ),
 
@@ -83,10 +84,13 @@ export class UserService {
             if (match) {
               return this._removePasswordFromUser(user);
             } else {
-              console.log("should throw exception")
-              throw Error;
+              throw new HttpException({
+                status: HttpStatus.BAD_REQUEST,
+                error: 'Wrong Email or Password',
+              }, HttpStatus.BAD_REQUEST,
+              );
             }
-            
+
           }),
         ),
       ),

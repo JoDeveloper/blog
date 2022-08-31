@@ -12,6 +12,7 @@ import { catchError, map, Observable, of } from 'rxjs';
 import { hasRoles } from '../../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../auth/guards/jwt-guard';
 import { RolesGuard } from '../../auth/guards/roles-guard';
+import { LoginDto } from '../dtos/login.dto';
 import { User } from '../models/user.enterface';
 import { UserService } from '../services/user.service';
 
@@ -43,9 +44,9 @@ export class ControllersController {
   }
 
   @Post('login')
-  login(@Body() user: User): Observable<any> {
+  login(@Body() loginDto: LoginDto): Observable<any> {
     return this._usersService
-      .login(user)
+      .login(loginDto)
       .pipe(map((jwt: string) => {
         return { access_token: jwt };
       }),
