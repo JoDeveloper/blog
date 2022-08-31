@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { Observable } from "rxjs";
+import { map, Observable } from "rxjs";
+import { User } from 'src/users/models/user.enterface';
 import { UserService } from '../../users/services/user.service';
 
 @Injectable()
@@ -17,8 +18,16 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const request = context.switchToHttp().getRequest();
-    console.log(request);
     const user = request.user;
-    return true;
+    return this.userservice.findOne(user.id).pip(
+      map((user: User) => {
+        const hasRole = () => roles.indexOf(user.role) > -1;
+        let hasPermission: boolean = false;
+        if (hasRole()) {
+          hasPermission = true;
+        }
+        return user && hasPermission;
+      })
+    );
   }
 }
